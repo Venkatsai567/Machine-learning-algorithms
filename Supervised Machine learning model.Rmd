@@ -1,0 +1,729 @@
+---
+title: "CIA-3"
+author: "venkata sai krishna Nivarthi"
+date: "05/09/2021"
+output: html_document
+---
+#Problem statement-An automobile industry which manufactures and sells vehicles, after few years, the company seemes that many of the customers are not extending their insurance.The purpose of this project is to determine the response of the customer whether they would accept or reject the offer and we are perfomring Discriminant Analysis and finding differentiating varaibles between the two categories(no,yes) of dependent variable response. We are also performing decision tree to know which variables are effecting the final result and using KNN we are knowing how many clusters to create.we make based on the customer profile. The profile of the customer is built upon based on details such as Employment status, Marital status, Income group, etc.The aim of this analysis to get know whether our insurance customers will extend their vehicle insurance based on their behaviour or not by considering machine learning methods and deciding the effecting variables and clusters.
+
+#Importing the dataset and storing it as data1 and viewing the dataset
+```{r}
+
+data1=read.csv("C:\\Users\\VENKATA SAI\\Desktop\\MLA-Supervised(R)\\Customer_Purchase-Marketing-Analysis.csv", stringsAsFactors = TRUE)
+
+head(data1)
+
+```
+
+#Data Exploration
+```{r}
+
+sapply(data1, class)
+
+```
+
+
+#sapply() function to count the number of observations with each feature that contains.
+#Checking the null values of each variable
+```{r}
+
+sapply(data1, function(x) sum(is.na(x)))
+
+```
+#There are no null values with regards with each variable
+
+
+#Similarly, the number of unique observations per column is revealed below.
+#This gives length of unique observations for each column variable
+```{r}
+
+sapply(data1, function(x) length(unique(x)))
+
+```
+
+#Using the missmap() function under the Amelia package, the visualization of the amount of missing and observed values per features is observed below. 
+#This shows the missing and observed values in the form of visualization
+```{r}
+
+library(Amelia)
+missmap(data1, main = "Missing Values vs. Observed")
+
+```
+#There are no null values
+
+#Each customer owns a car and you as entrepreneur offers 4 different car insurances to them. The target of this dataset is the Response.The response can be "Yes" - the customer accept the offer and "No" - the customer didn´t accept the offer.
+#Using Graphs to understand our Data
+# Relation between numerical variables
+
+```{r}
+
+nums = unlist(lapply(data1, is.numeric)) 
+insurance_numeric=data1[,nums]
+corr=cor(insurance_numeric)
+
+library(ggcorrplot)
+ggcorrplot(corr, hc.order = TRUE, type = "lower",lab = TRUE)
+
+```
+#1) this shows the correlation between the variables, this is done to understand about the varaibles relationship
+#2) the red colour indicates positive correlation, if one variable incrases, the other variable increases and vice versa, so if we increase total claim amount, the monthly premium will increase.
+#3) The blue colour iindicates that there is negative correlation, if ne variables increases, the other decreases and vice versa. In this case, income increase, the total claim amount decreases or vice versa.
+#4) the white colour represents there is no corrleation between the variables.
+
+
+## Exploratory Data Analysis
+##Relation between categorial variables and response variable Gender - > Response
+```{r}
+library(ggplot2)
+
+ggplot(data1, aes(Response, fill= Gender))+geom_bar(position='dodge')
+
+```
+#As we can see that our independent variable is not balance, we have people will no continue to use vehicle insurance about 5479 and people will not use vehicle insurance about 916. This can be our consideration to analysis this data with resampling or feature engineering to improve our model
+#No reponses are more from both male and female.
+
+
+##Relationship between Response and State
+```{r}
+ggplot(data1, aes(State, fill= Response))+geom_bar(position='dodge')
+
+```
+#The no responses are more from california when compared to all states, its nearly 3000.  An the least no are from washington.
+#The Yes response are also more from california, this means there are more population from california
+
+
+
+##Relationship between Response and Coverage
+```{r}
+
+ggplot(data1, aes(Coverage, fill= Response))+geom_bar(position='dodge')
+
+```
+#Basic coverage people are not intrested in extending their insurance compared to extended and premium.
+#the highest to lowest range follows in this order- basic, extended, premium.
+
+
+
+###Relationship between Response and Education
+```{r}
+
+ggplot(data1, aes(Education, fill= Response))+geom_bar(position='dodge')
+
+
+```
+#College going and bachelor are intrested in extending the insurance premium and also they are the most who has responded no for this data.
+
+
+##Relationship between Response and Location code
+```{r}
+
+ggplot(data1, aes(Location.Code, fill= Response))+geom_bar(position='dodge')
+
+
+```
+#The sururban people are not intrested in extension of the insurance and they have the more votes.
+#the urban and rural are very less, who agreed to extend.
+
+
+##Relationship between Response and marital status
+```{r}
+
+ggplot(data1, aes(Marital.Status, fill= Response))+geom_bar(position='dodge')
+
+
+```
+#Married people are more intrestd in extending the insurance when compared to divorced and single.
+
+
+##Relationship between Response and Months since last claim
+```{r}
+
+ggplot(data1, aes(Months.Since.Last.Claim, fill= Response))+geom_bar(position='dodge')
+
+
+```
+#The responses for months since last claim are no are more when compared to yes.
+
+
+##Relationship between Response and Number.of.Open.Complaints
+```{r}
+
+
+ggplot(data1, aes(Number.of.Open.Complaints, fill= Response))+geom_bar(position='dodge')
+
+
+```
+#No complaited people are inttrested in extending their insurance premium.
+
+
+
+##Relationship between Response and No of policies
+```{r}
+
+ggplot(data1, aes(Number.of.Policies, fill= Response))+geom_bar(position='dodge')
+
+
+```
+#The 0 policy people are more intrested in extending the insurance premium.
+
+
+##Relationship between Response and Policy type
+```{r}
+
+ggplot(data1, aes(Policy.Type, fill= Response))+geom_bar(position='dodge')
+
+```
+#Personal auto type of people have responded yes to extend their plan for the insurance premium when compared to corporate auto and special auto.
+
+
+##Relationship between Response and renew offer type
+```{r}
+
+ggplot(data1, aes(Renew.Offer.Type, fill= Response))+geom_bar(position='dodge')
+
+
+```
+#Offer 4 people are not at all intrested in extending the insurance premium.
+#Offer 2 people are intrested most to extend their insurance premium and then offer 1 people.
+
+
+##Relationship between Response and sales channel
+```{r}
+
+ggplot(data1, aes(Sales.Channel, fill= Response))+geom_bar(position='dodge')
+
+
+```
+#The people who approached through agent are intrested in extending their insurance premium, this says that, agents are working more and grabbing more customers.
+#The order of extending the isurance premium is agaent, branch, call center, web of sales channel.
+
+
+##Relationship between Response and vehicle class
+```{r}
+
+ggplot(data1, aes(Vehicle.Class, fill= Response))+geom_bar(position='dodge')
+
+
+```
+#Four door car, two door car, suv car holders are intrested in extending their insurance premium, this says people with big cars are intrested in extedning their insuranc epremium.
+#Luxury car and luxury suv are least interested.
+
+
+##Relationship between Response and Vehicle size
+```{r}
+
+ggplot(data1, aes(Vehicle.Size, fill= Response))+geom_bar(position='dodge')
+
+
+```
+#Mid-size vehicle owners are intrested in extending their insurance premium rather than small and large size vehicles.
+
+#---------------------Discriminant Analysis-----------------------------------------------
+
+# Below we will be performing the t-test for finding the significance effect or significant difference on dependent categorical variable Response
+# From the below output of t-test we can see that all the independent variables have significant effect on dependent varaible Response
+#Null Hypothesis- There is a difference in means is equal to 0(No significant relation)
+#Alternate Hypothesis- There is a difference in measn is not equal to 0( significant relation)
+```{R}
+t.test(data1$Customer.Lifetime.Value~ data1$Response)# There is no significant difference as p value is greater than 0.05
+t.test(data1$Income ~ data1$Response)# There is no significant difference as p value is greater than 0.05
+t.test(data1$Monthly.Premium.Auto ~ data1$Response)# There is no significant difference as p value is greater than 0.05
+t.test(data1$Months.Since.Last.Claim ~ data1$Response)# There is no significant difference as p value is greater than 0.05
+t.test(data1$Months.Since.Policy.Inception ~ data1$Response)# There is no significant difference as p value is greater than 0.05
+t.test(data1$Number.of.Open.Complaints ~ data1$Response)# There is no significant difference as p value is greater than 0.05
+t.test(data1$Total.Claim.Amount ~ data1$Response)# There is no significant difference as p value is greater than 0.05
+
+```
+
+
+#Subsetting the data according to the requirement as the discriminant analysis independent variables should be scale variables
+```{r}
+data2=data1[,c(3,4,10,13:17,22)]
+str(data2)
+
+```
+
+# Below we will be checking for normality between the variables, For checking the normality we use Multivariate Normality test, For performing Multivariate Normality test we use library MVN, Here in this we perform Henze-Zirkler test in Multivariate normality
+# Here below we have
+# Ho(Null Hypothesis) = Normally distributed
+# H1(Alternate Hypothesis) = Not Normally distributed
+
+
+```{R}
+library(MVN)
+multivariate1 = mvn(data = data2, subset = "Response", mvnTest = "hz")
+multivariate1
+
+```
+# From the  output by Henze-Zirkler test we can see that as p-value for both no and yes is <0.05 we can say that we are rejecting null hypothesis and accepting alternate hypothesis 
+# We can also see that in Univariate normality output in NO category are only few variables are normally distributed rest variables in Not Affected category and all variables in Affected category are not normally distributed
+# We can also observe the Descriptive statistic values for all the variables in No and yes category
+#The MVN value is no with hz is 10.28077
+
+
+
+# Below we are checking the presence of outliers in the dataset
+# From the below output we can say that there are no Outliers present in the dataset.
+```{r}
+
+multivariate1<-mvn(data2, subset = "Response", mvnTest = "hz", showOutliers = TRUE)
+multivariate1$multivariateOutliers
+
+```
+# Below we are performing calculations for checking Homogeneity of varience across different groups.
+# For doing this we are performing Box M test , The Box M test is used to check variance and co-variance for all the independent variables of two groups in dependent variable response as Not Affected and Affected is equal or not. Here we perform Hypothesis test as shown below
+# Ho(Null Hypothesis) = data distributes as homogeneous 
+# H1(Alternate Hypothesis) = data distributes is not homogeneous
+# From the below output as p-value<0.05 we are rejecting null hypothesis.
+# The reason for non homogenity is due to different varaiance across the group and the many variables are not normally distributed
+
+```{R}
+library(biotools)
+boxM(data2[,-2], data2$Response)
+
+```
+# By below code we are estimating what variable is effecting the most. for checking this we are using MASS library as shown below.
+# Here we are performing Discriminant regression and finding what variables are effecting the output or dependent varaible.
+
+# From the below output of Prior probability which is greater than 0.20 which indicates proportion of categories present in the model.
+# We can also observe the means distribution of all the independent variables with repestive two categories (No, Yes) of dependent variable
+# From the output of Linear discriminant LD1 we can see that all the varaibles give low discriminate with two categories of dependent variable Response but we can see that two variables Total.Claim.Amount,income and Months.Since.Policy.Inception show high discriminant with dependent variable categories of yes and no in positive direction.
+```{r}
+
+library(MASS)
+dreg1 = lda(Response~. , data = data2)
+dreg1
+summary(dreg1)
+#dreg1$means
+#dreg1$scaling
+
+```
+# Below we are building fishers discriminating funciton
+# Below we are using DiscriMiner library
+# The functions output below shows the fishers discriminating function indicates how much a specific independent variable is discriminating two categories of yes and no of a dependent variable. Higher the value better is the result in discriminating.
+# The below confusion Matrix shows the division of all the independent variables with two categories of no and yes in dependent variable Response.
+# The error rate shows here as 0.14 which is very low in the model built.
+# Below we can also see the scores of all the independent variables in two categories of Not Affected and Affected for dependent variable classification which is shown as top 8 different sets as shown.
+
+
+```{R}
+library(DiscriMiner)
+dreg2 = linDA(data2[,-2], data2$Response)
+dreg2
+
+```
+
+
+# Below we are performing Wilks Lamda test
+
+
+```{R}
+discPower(data2[,-2], data2$Response)
+
+```
+# For model fitting the below code is used
+# Here below we use Candisc library
+# From below ouput we can see that Eigen Value is 0.0016. Here as the Eigen value is less than 1 this indicates that this is a better model to be used
+# We can also see that Canonical R Square value indicates that 0,001 of discrimination because of this model between the two categories of yes and no of dependent variable Classification
+# Here in Output of Can1, it indicates that raw Canonical discrimant analysis of the variables present in the dataset
+# Here in Output of standardised Can1, it indicates the standardised Canonical discriminant analysis for the variables present in the dataset with respective of independent variables on dependent variable categories of yes and no.
+```{R}
+library(candisc)
+dreg3<-lm(as.matrix(data2[,-2])~data2$Response)
+regcanno<-candisc(dreg3)
+regcanno
+regcanno$coeffs.raw
+regcanno$coeffs.std
+regcanno$structure
+
+```
+
+
+#--------------Decision Tree--------------------------
+
+#Importing the libraries which are required to perform decision tree
+```{R}
+library(rpart)
+library(tree)
+library(partykit)
+library(rpart.plot)
+
+```
+
+
+#Importing tha data as Data3
+```{R}
+data3=read.csv("C:\\Users\\VENKATA SAI\\Desktop\\MLA-Supervised(R)\\Customer_Purchase-Marketing-Analysis.csv", stringsAsFactors = TRUE)
+str(data3)
+
+```
+
+#Removing the unnecessary columns to do decision tree
+```{r}
+data3=data3[,-c(1,7,19)]
+
+
+```
+
+# The below code shows the partion creation
+# Below we are performing decision tree analysis on the given dataset
+# Before performing decision tree at first we are creating a partition for the dataset and dividing it into train data and test data
+# Below partition times specifies taht there are 1 partition created with repective dependent variable. Here we are making training containing 70% of data, list false indicate that it is in a form of matrix. groups specify the number of breaks present.
+
+# The below code shows the partion creation
+```{r}
+
+
+
+library(caret)
+set.seed(100)
+split1<-createDataPartition(data3$Response,
+                            times = 1, p=0.7, list = FALSE, 
+                            groups = min(5, length(data3$Response)))
+
+summary(split1)
+
+```
+
+# Creating train and test dataframes from the split variable
+# The below code shows the mentioned creation and checking the dimensions of both test data and train data
+```{r}
+
+datatrain<-data3[split1,]
+datatest<-data3[-split1,]
+
+dim(datatrain)
+dim(datatest)
+
+```
+# Below we are building a Decision tree by using trian data 
+# We are loading rpart, rpart.plot library for the same
+# Here below we are using class method because the dependent variable is categorical
+# In general we use minimum split as 20 and minimum bucket size as 5 with maximum depth as 5 but here without that it works better
+
+# The below code shows 
+```{r}
+
+library(rpart)
+
+dt1<-rpart(Response~.,
+           data = datatrain, 
+           method = "class")
+#information in place of gini, cp=0.0001
+
+```
+
+# Plotting the above built decision tree below. for plotting we use rpart.plot library
+# Here type = 3 it indicates getting the output in separate split label for the both left and right directions,
+# Here cex = 1.0 indicates the test size 
+```{r}
+
+
+
+library(rpart.plot)
+
+rpart.plot(dt1,cex = 1.0)
+
+
+```
+#From the output we can say that out of 22 independent variables, only 2 varaibles are considered to get the insights because these 2 are effecting the dependent variable.
+#If we see that employement status and renew offer type are the most important variables for this decision tree
+#The employment status people saying that they will renew the insurance us 3% whre as no is 97%
+#The employement people who said yes and intrested in both renew offer type 3 and 4
+#So from the decision tree accepting offer 4 peole are more compared to offer 3
+
+
+
+#The Tree0 has a prediction rate of 87.5% (5599 out of 6393 predicted right).
+
+#Since only twow variables used, changing Complexity Parameter to add more depth. CP = 0.001 (0.01 default)
+```{r}
+tree1 <- rpart(formula = Response ~ ., data = datatrain, cp=0.001, method = "class")
+tree1
+
+
+
+```
+```{r}
+
+prp(tree1, extra = 1)
+```
+#Depth of the tree is too large and unreadable because of length of variables and their factors. Pruning the tree to change Complexity Parameter to reduce depth.
+```{r}
+
+plotcp(tree1)
+```
+```{r}
+
+printcp(tree1)
+
+```
+#Setting the CP value to 0.0034
+
+```{r}
+tree_final<-prune(tree1, cp = 0.0034)
+prp(tree_final, extra = 1)
+
+
+```
+# Performing complexity paramenter and variable importance for the above model
+# the output of complexity parameter shows the minimum improvement in the model needed at each node as here it has only 4 nodes and improvement for each node is shown
+# The output of variable improtance specify the importance of each variable in effecting the output of decision tree building
+
+# The below code shows it
+
+```{r}
+# Performing cp for the above model
+dt1$cptable
+# Variable importance of the above model
+dt1$variable.importance
+
+
+
+```
+#The output of complexity parameter shows the minimum improvement in the model needed at each node as here it has only 3 nodes and improvement for each node is shown
+#The output of variable importance specify the importance of each variable in effecting the output of decision tree building here in this case employment status has highest importance followed by Renew offer type.  But the rest of the variables are having least importance. So this is the reason behind the tree diagram where onlyemployement status and renew offer type variables are considered.
+
+
+
+
+# Below we will be building a Confusion Matrix 
+# Before building a Confusion Matrix we are building a prediction function for the decision tree that we build 
+# Then we are building a Confusion Matrix between test data dependent variable and prediction function
+# From teh below output of Confusion Matrix we can say that.
+# The Accuracy in buiding a decision tree of obtaining in the specified confidence interval is 94%.
+# P value observed is less than 0.05 leading to rejection of null hypothesis saying that the model is significant.
+# From the below ouptut we have high sensitivity of 87% and high specificity of 82% in the created model.
+
+```{r}
+# building confusion matrix for the above
+predict1 <- predict(dt1, datatest, type = "class")
+table(predict1)
+confusionMatrix(datatest$Response, predict1)
+
+
+```
+
+#--------Random Forest---------------------------------------
+
+
+# Here below we are loading requierd library for and building a cross validation
+# Here we are perfomring Random Forest and finding relationship between the two categories(yes, no) of dependent variable Response.
+# Here we are building Random Forest for the given dataset with repective to the dependent variable Response.
+```{r}
+
+library(caret)
+library(randomForest)
+
+control<-trainControl(method = "CV", number = 10, savePredictions = TRUE)
+
+
+```
+
+# Building the Random forest model
+```{r}
+
+dt2<-train(Response~.
+             , data = datatrain,trcontrol= control,
+           method="rf")
+
+dt2
+
+```
+#22nd model has highest accuracy
+#2nd model has lowest kappa value
+
+# The code gives us the variable importance of random forest variables with coefficient names
+```{r}
+varImp(dt2)
+# This gives coefficient names
+dt2$coefnames
+
+```
+#This explains us about the important variables which are impacting the dependent variable along with its magnitude. By this also we can able to understand the variables which has the order of impact on the dependent variables. Customer.Lifetime.Value followed by Total.Claim.Amount showing more impact compared to other followed by Income, Months.Since.Policy.Inception and Number.of.Policies.
+
+#the variable importance is is high for customer lifetime value
+#and least is Renew.Offer.TypeOffer3
+
+
+# Below we are plotting the random forest model
+# The given plot shows the relationship between trees and the errors
+```{r}
+
+plot(dt2$finalModel)
+
+```
+#The given plot shows the relationship between trees and the errors
+
+
+# Now we shall buid a prediction function with test data
+# The below prediction function shows the division between Affected and Not Affected variables
+```{r}
+
+predict1<-predict(dt2, datatest)
+table(predict1)
+
+```
+
+
+# Below we shall build confusion matrix
+# From the below confusion matrix we can see that the 
+# Accuracy of the model is 99%. The confidence interval is also shown as between 0.94 to 0.9979
+# The P-value is less than 0.05 saying that it is significant 
+# We can see that it has High Sensitivity (96%) and high specificity (100%) showing the model is accurate
+# This High sensitivity and high specificity may also lead to over fitting between the variables
+```{r}
+
+confusionMatrix(predict1, datatest$Response)
+
+
+```
+
+#------------------------KNN-------------------------
+
+# Below we are loading caret library and building a cross-validation 
+# In the below cv number = 10 means the crossvalidation is done for 10 values
+```{r}
+
+library(caret)
+
+fitcontrol<-trainControl(method = "cv", number =10)
+
+
+```
+
+# Below we are building KNN model
+
+# From the below output we can see that there are 10 k values are created and in each K value we can observe the Accuracy and Kappa values shown
+# We can also see that as the k-value changes Accuracy and Kappa value also changes
+# We can see that the best model is obtained with k=9 where we will get High Accuracy and High Kappa value
+```{r}
+
+knnmodel<-train(Response~., 
+                data = datatrain, 
+                method= "knn", 
+                trControl= fitcontrol, 
+                preProcess= c("center", "scale"), 
+                tuneLength= 10)
+
+knnmodel
+
+```
+#From the output we can see that there are 10 k values are created and in each K value we can observe the Accuracy and Kappa values shown. We can also above that as the k-value changes Accuracy and Kappa value also changes. 
+#However the best model is obtained at k=5 where we will get High Accuracy and High Kappa value
+
+# Below we are plotting the KNN model
+# Below it shows the Accuracy or cross-validation for each k-value esstimated
+```{r}
+
+plot(knnmodel)
+
+```
+#The graph shows accuracy with the no of k value.
+
+#Creating into dummies
+#Encoding the categorical variables into 1,0 using library fastdummies
+#It is converted 1,0 using dummy_cols
+```{r}
+
+library(fastDummies)
+
+data4=dummy_cols(data3, select_columns = c("Marital.Status", "Location.Code", "Coverage", "Renew.Offer.Type"))
+
+                
+                  
+```
+#diff between cv and repeatedcv is cv is running 10 times, in repeated cv- the number 10 in each repeating 5 times, so 10*5=50 times
+```{r}
+fitcontrol<-trainControl(method = "repeatedcv", repeats =5)
+
+knnmodel<-train(Response~., 
+                data = data4, 
+                method= "knn", 
+                trControl= fitcontrol, 
+                preProcess= c("center", "scale"), 
+                tuneLength= 20)
+
+
+knnmodel
+
+```
+#From above kNN model, the accuracy has been increased by 2percent, and kappa value increased by 9 percent.
+#So converting the categorical variables into 0,1 will increase the accuracy, so it is better to deploy the model using it, by converting into 0,1
+
+
+#Confusion matrix
+```{r}
+
+predict1<-predict(knnmodel, data4)
+table(predict1)
+confusionMatrix(predict1, data4$Response)
+
+```
+#The accuracy is 95percent and sensitivity is 94percent, specificity is 98percent
+#This says the model good for deployment 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
